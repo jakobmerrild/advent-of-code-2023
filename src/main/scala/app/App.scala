@@ -1,12 +1,12 @@
 package app
 
 import com.monovore.decline.effect.CommandIOApp
-import cats.syntax.all._
+import cats.syntax.all.*
 import cats.effect.ExitCode
 import cats.effect.IO
 import com.monovore.decline.Opts
 import cats.data.Reader.apply
-import days.Puzzle
+import days._
 
 object App
     extends CommandIOApp(
@@ -22,6 +22,7 @@ object App
   def solve(solve: AppOpts.Solve): IO[ExitCode] =
     input.Reader.getInputForDay(solve).flatMap { input =>
       val puzzle = solve.day match {
+        case 1 => new Day1(input).pure[IO]
         case _ =>
           IO.raiseError[Puzzle](new Exception(s"Unsupported day: ${solve.day}"))
       }
