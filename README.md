@@ -1,5 +1,5 @@
-# advent-of-code-base
-This repository contains my base for solving [advent-of-code](https://adventofcode.com/).
+# advent-of-code-2023
+This repository contains my base for solving [advent-of-code-2024](https://adventofcode.com/2023).
 
 The repository uses Scala 3
 
