@@ -24,6 +24,7 @@ object App
       val puzzle = solve.day match {
         case 1 => new Day1(input).pure[IO]
         case 2 => new Day2(input).pure[IO]
+        case 3 => new Day3(input).pure[IO]
         case _ =>
           IO.raiseError[Puzzle](new Exception(s"Unsupported day: ${solve.day}"))
       }
