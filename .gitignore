@@ -157,3 +157,4 @@ hs_err_pid*
 .idea
 .bsp
 **/target/**
+**/resources/**/input.txt
