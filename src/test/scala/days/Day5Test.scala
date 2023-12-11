@@ -2,6 +2,7 @@ package days
 
 import munit.{FunSuite, ScalaCheckSuite}
 import Day5.*
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop.forAll
 
 class Day5Test extends FunSuite with ScalaCheckSuite {
@@ -58,6 +59,46 @@ class Day5Test extends FunSuite with ScalaCheckSuite {
     )
   }
 
+  test("checking stuff") {
+    val x = Range(20, 10)
+    val ys = List(
+      Range(0, 10), // completely on the left
+      Range(10, 15), // overlaps from the left
+      Range(22, 5), // completely inside
+      Range(0, 40), // overlaps on both sides
+      Range(25, 12), // overlaps from the right
+      Range(40, 20), // completely on the right
+      Range(20, 10) // identity
+    )
+    ys.foreach { y =>
+      val result = x.cut(y)
+      val resultLength = result.leftRemainder.map(_.length).getOrElse(0L) +
+        result.intersect.map(_.length).getOrElse(0L) +
+        result.rightRemainder.map(_.length).getOrElse(0L)
+      assertEquals(resultLength, y.length)
+    }
+  }
+
+  val rangeGenerator: Gen[Range] = for {
+    start <- Gen.choose(0, Int.MaxValue)
+    length <- Gen.choose(1, Int.MaxValue)
+  } yield Range(start.toLong, length.toLong)
+
+  implicit val arbRange: Arbitrary[Range] = Arbitrary(rangeGenerator)
+
+  property("Range.cut") {
+    forAll { (x: Range, y: Range) =>
+      val result = x.cut(y)
+      val resultLength = result.leftRemainder.map(_.length).getOrElse(0L) +
+        result.intersect.map(_.length).getOrElse(0L) +
+        result.rightRemainder.map(_.length).getOrElse(0L)
+
+      assertEquals(resultLength, y.length)
+      assertEquals(y.start < x.start, result.leftRemainder.isDefined)
+      assertEquals(y.end > x.end, result.rightRemainder.isDefined)
+    }
+  }
+
   property("MappingRange.mapRange result should never change total length") {
     forAll {
       (
@@ -102,8 +143,8 @@ class Day5Test extends FunSuite with ScalaCheckSuite {
     val mapping = Mapping(ranges)
     val range = Range(0, 100)
     val result = mapping.mapRange(range)
-    val expected = Set(Range(52, 48), Range(50, 2), Range(0,50))
-    assertEquals(result.toSet,expected)
+    val expected = Set(Range(52, 48), Range(50, 2), Range(0, 50))
+    assertEquals(result.toSet, expected)
   }
 
   test("Day5.solve2") {

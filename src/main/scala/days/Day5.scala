@@ -32,7 +32,50 @@ class Day5(input: String) extends Puzzle {
 }
 
 object Day5:
-  final case class Range(start: Long, length: Long)
+
+  final case class RangeCutResult(
+      leftRemainder: Option[Range],
+      intersect: Option[Range],
+      rightRemainder: Option[Range]
+  )
+  final case class Range(start: Long, length: Long) {
+    val end: Long = start + length
+
+    def cut(that: Range): RangeCutResult = {
+      val leftRemainder =
+        if (that.start < start)
+          val newEnd = Math.min(this.start, that.end)
+          Some(Range(that.start, newEnd - that.start))
+        else None
+
+      val rightRemainder =
+        if (that.end > end) {
+          val newStart = Math.max(that.start, end)
+          Some(Range(newStart, that.end - newStart))
+        } else None
+
+      val intersect =
+        if (that.start <= this.start && that.end >= this.end)
+          // This is fully covered by that
+          Some(this)
+        else if (that.start >= this.start && that.end <= this.end)
+          // That is fully covered by this
+          Some(that)
+        else if (that.start <= this.start && that.end >= this.start)
+          // That reaches into this from the left
+          Some(Range(this.start, that.end - this.start))
+        else if (
+          that.start >= this.start && that.start <= this.end && that.end >= this.end
+        )
+          // That reaches into this from the right
+          Some(Range(that.start, this.end - that.start))
+        else
+          // No overlap
+          Option.empty[Range]
+
+      RangeCutResult(leftRemainder, intersect, rightRemainder)
+    }
+  }
 
   final case class MapRangeResult(
       result: Option[Range],
@@ -40,6 +83,9 @@ object Day5:
   )
 
   final case class MappingRange(destination: Long, source: Long, length: Long) {
+    private val sourceRange = Range(source, length)
+    private val delta = destination - source
+
     def map(n: Long): Option[Long] =
       if (n >= source && n < source + length)
         Some(n - source + destination)
@@ -48,50 +94,14 @@ object Day5:
 
     /** */
     def mapRange(range: Range): MapRangeResult =
-      // range is empty
-      if (range.length == 0)
-        MapRangeResult(None, Nil)
-      // range is not covered by this mapping
-      else if (
-        range.start >= source + length || range.start + range.length <= source
-      )
-        MapRangeResult(None, List(range))
-      // range is fully covered by this mapping
-      else if (
-        range.start >= source && range.start + range.length <= source + length
-      )
-        MapRangeResult(
-          Some(Range(range.start - source + destination, range.length)),
-          Nil
-        )
-      // range is stretches over this map
-      else if (
-        range.start <= source && range.start + range.length >= source + length
-      )
-        MapRangeResult(
-          Some(Range(destination, length)),
-          List(
-            Range(range.start, source - range.start),
-            Range(source + length, range.start + range.length - source - length)
-          )
-        )
-
-      // range is partially covered by this map from the left
-      else if (range.start <= source && range.start + range.length > source) {
-        MapRangeResult(
-          Some(Range(destination, range.length - source + range.start)),
-          List(Range(range.start, range.start + range.length - source))
-        )
-      } // range is partially covered by this map from the right
-      else {
-        val remainderLength = source + length - range.start
-        MapRangeResult(
-          Some(Range(range.start, source + length - range.start)),
-          List(
-            Range(source + length, range.start + range.length - source - length)
-          )
-        )
+      val rangeCut = sourceRange.cut(range)
+      val intersectMapping = rangeCut.intersect.map { intersect =>
+        Range(intersect.start + delta, intersect.length)
       }
+      val remainders =
+        rangeCut.leftRemainder.toList ++ rangeCut.rightRemainder.toList
+
+      MapRangeResult(intersectMapping, remainders)
   }
 
   object MappingRange:
