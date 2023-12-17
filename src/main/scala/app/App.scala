@@ -29,6 +29,7 @@ object App
         case 5 => new Day5(input).pure[IO]
         case 6 => new Day6(input).pure[IO]
         case 7 => new Day7(input).pure[IO]
+        case 8 => new Day8(input).pure[IO]
         case _ =>
           IO.raiseError[Puzzle](new Exception(s"Unsupported day: ${solve.day}"))
       }
